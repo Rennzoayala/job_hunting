@@ -1,0 +1,4 @@
+.env
+*.pyc
+tectonic.exe
+output/.last_run.hash

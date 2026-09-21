@@ -1,0 +1,39 @@
+Acerca del empleo
+
+AI ENGINEER | INTELIGENCIA ARTIFICIAL
+
+Buscamos un/a AI Engineer para desarrollar soluciones de Inteligencia Artificial que optimicen procesos, mejoren la toma de decisiones e impulsen la innovación tecnológica de la empresa.
+
+
+¿QUÉ HARÁS?
+
+    Diseñar y optimizar prompts y flujos de razonamiento para agentes inteligentes.
+    Integrar APIs de IA: OpenAI, Anthropic, Google, Meta, Hugging Face, entre otras.
+    Desarrollar soluciones basadas en IA y modelos de lenguaje (LLM).
+    Diseñar e implementar sistemas multi-agentes y flujos autónomos.
+    Construir y orquestar sistemas de IA utilizando frameworks como LangChain, LangGraph, CrewAI, Autogen y herramientas no-code/low-code
+    Realizar investigación continua para evaluar y recomendar nuevas herramientas o modelos para la organización
+    Mantenerse actualizado en tendencias de IA, modelos, frameworks y tecnologías emergentes
+
+
+REQUISITOS
+
+    Python con Django — nivel intermedio/avanzado.
+    Conocimiento intermedio/avanzado de LLM y su integración en soluciones reales.
+    Experiencia con APIs de IA: OpenAI, Anthropic, Google, Meta, Hugging Face.
+    Administración de PostgreSQL y bases de datos relacionales.
+    Ingeniería de Prompts y diseño de flujos conversacionales.
+    Conocimiento y orquestación de Agentes de IA.
+    Experiencia en automatizaciones con Inteligencia Artificial.
+    Manejo de herramientas no-code/low-code de IA.
+    Automatizaciones con Inteligencia Artificial
+
+
+FORMACIÓN DESEABLE
+
+    Ciencia de Datos (Data Science).
+    Curso de Programación Avanzada en Python para IA.
+    Curso Profesional de Ingeniería de Prompts
+    Especialización en Arquitecturas de Sistemas Multi-Agentes y Automatización Inteligente
+    Programa de Especialización en Machine Learning
+
