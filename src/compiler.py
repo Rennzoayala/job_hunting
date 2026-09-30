@@ -3,6 +3,11 @@ import shutil
 import sys
 from pathlib import Path
 
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8")
+if hasattr(sys.stderr, "reconfigure"):
+    sys.stderr.reconfigure(encoding="utf-8")
+
 def detectar_compilador() -> str:
     """Busca tectonic en la raíz del proyecto o en el PATH del sistema."""
     # 1. Buscar tectonic.exe en la raíz del proyecto
@@ -83,4 +88,4 @@ def compile_pdf(tex_path: str, output_dir: str) -> Path:
                 print("💡 Ejecuta en tu terminal: .\\tectonic.exe .\\output\\tailored_cv.tex -o .\\output")
                 print("   para ver la respuesta directa de la consola.")
         print("=" * 55)
-        sys.exit(1)
+        raise RuntimeError(f"Error during LaTeX compilation (exit code {e.returncode}):\n{salida_completa}")
