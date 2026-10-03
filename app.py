@@ -18,6 +18,7 @@ except ImportError:
 
 from src.agent import generar_cv_adaptado
 from src.compiler import compile_pdf
+from src.llm_provider import obtener_proveedor
 
 # Page configuration
 st.set_page_config(
@@ -29,36 +30,66 @@ st.set_page_config(
 # App Header
 st.title("📄 Job Hunting: AI CV Tailor")
 st.markdown(
-    "Tailor your LaTeX CV to any job description in seconds using Google Gemini. "
+    "Tailor your LaTeX CV to any job description in seconds using AI (Gemini, OpenAI, or Claude). "
     "Get recruiter-optimized bullet points, matched skills, and ready-to-use output."
 )
 
 # Sidebar configuration
 with st.sidebar:
     st.header("⚙️ Settings")
-    
-    # API Key Input
-    saved_key = os.environ.get("GEMINI_API_KEY", "")
+
+    # --- Provider Selection ---
+    st.subheader("Proveedor LLM")
+    provider_choice = st.selectbox(
+        "Proveedor:",
+        options=["Gemini", "OpenAI", "Claude"],
+        index=0,
+    )
+    nombre_proveedor = provider_choice.lower()
+    os.environ["LLM_PROVIDER"] = nombre_proveedor
+
+    # --- API Key (dynamic) ---
+    MAPA_API_KEY = {
+        "gemini": ("GEMINI_API_KEY", "https://aistudio.google.com/app/apikey"),
+        "openai": ("OPENAI_API_KEY", "https://platform.openai.com/api-keys"),
+        "claude": ("ANTHROPIC_API_KEY", "https://console.anthropic.com/settings/keys"),
+    }
+    var_env, url_clave = MAPA_API_KEY[nombre_proveedor]
+    clave_guardada = os.environ.get(var_env, "")
     api_key_input = st.text_input(
-        "Gemini API Key:",
-        value=saved_key,
+        f"API Key de {provider_choice}:",
+        value=clave_guardada,
         type="password",
-        help="Get a free key from Google AI Studio: https://aistudio.google.com/app/apikey"
+        help=f"Ingresa tu clave de API para {provider_choice}."
     )
     if api_key_input:
-        os.environ["GEMINI_API_KEY"] = api_key_input.strip()
-
-    st.markdown("[🔑 Get a free Gemini API Key](https://aistudio.google.com/app/apikey)")
+        os.environ[var_env] = api_key_input.strip()
+    st.markdown(f"[🔑 Obtener API Key de {provider_choice}]({url_clave})")
 
     st.markdown("---")
-    st.subheader("Model Selection")
-    model_choice = st.selectbox(
-        "Gemini Model:",
-        options=["gemini-3.8-flash", "gemini-3.7-flash", "gemini-3.6-flash", "gemini-3.5-flash-lite", "gemini-3.1-pro-preview"],
+
+    # --- Model Selection (curated + custom) ---
+    st.subheader("Selección de Modelo")
+    OPCIONES_MODELOS = {
+        "gemini": ["gemini-3.8-flash", "gemini-3.7-flash", "gemini-3.6-flash", "gemini-3.5-flash-lite", "gemini-3.1-pro-preview"],
+        "openai": ["gpt-4o-mini", "gpt-4o", "gpt-4.1-mini", "gpt-4.1", "o4-mini"],
+        "claude": ["claude-sonnet-4-20250514", "claude-haiku-4-20250514", "claude-opus-4-20250514"],
+    }
+    opciones = OPCIONES_MODELOS[nombre_proveedor] + ["✏️ Modelo personalizado"]
+    seleccion_modelo = st.selectbox(
+        f"Modelo de {provider_choice}:",
+        options=opciones,
         index=0,
-        help="Recommended: gemini-3.8-flash or gemini-3.5-flash-lite"
     )
-    os.environ["LLM_MODEL"] = model_choice
+
+    if seleccion_modelo == "✏️ Modelo personalizado":
+        custom_model = st.text_input("Nombre del modelo:", placeholder="ej: gpt-4o-2024-08-06")
+        model_choice = custom_model.strip() if custom_model else ""
+    else:
+        model_choice = seleccion_modelo
+
+    if model_choice:
+        os.environ["LLM_MODEL"] = model_choice
 
     st.markdown("---")
     st.subheader("Output Format")
@@ -142,13 +173,39 @@ with col2:
 
 st.markdown("---")
 
+# Strategy / Tailoring Mode Selection
+st.subheader("🎯 Estrategia de Adaptación")
+modo_seleccionado = st.radio(
+    "Selecciona cómo deseas adaptar tu currículum:",
+    options=[
+        "🛡️ Fiel al CV Base (Recomendado — Usa solo tu experiencia real, optimiza impacto sin inventar)",
+        "🚀 Adaptación Total (Ajuste agresivo — Proyecta y expande el perfil para cubrir toda la vacante)"
+    ],
+    index=0,
+    help=(
+        "Fiel al CV Base: No inventa experiencia laboral falsa; destaca habilidades transferibles reales "
+        "y solo incluye tecnologías faltantes como conocimientos teóricos en habilidades.\n\n"
+        "Adaptación Total: Reescribe con libertad para alinear todas las viñetas con la oferta."
+    )
+)
+modo_clave = "main_cv_based" if "Fiel al CV" in modo_seleccionado else "full_tailored"
+modo_etiqueta = "Fiel al CV Base" if modo_clave == "main_cv_based" else "Adaptación Total"
+
+st.markdown("---")
+
 # Generate Button
 generate_btn = st.button("🚀 Generate Tailored CV", type="primary", use_container_width=True)
 
 if generate_btn:
     # 1. Validations
-    if not os.environ.get("GEMINI_API_KEY"):
-        st.error("❌ Please provide a valid **Gemini API Key** in the sidebar settings.")
+    var_env, _ = MAPA_API_KEY[nombre_proveedor]
+    clave_activa = os.environ.get(var_env, "").strip()
+    if not clave_activa:
+        st.error(f"❌ Ingresa una **API Key de {provider_choice}** válida en la barra lateral.")
+        st.stop()
+
+    if not model_choice:
+        st.error(f"❌ Por favor especifica un nombre de modelo válido para {provider_choice}.")
         st.stop()
         
     if not cv_content or len(cv_content.strip()) < 50:
@@ -169,13 +226,20 @@ if generate_btn:
 
     # 2. Execution
     try:
-        with st.spinner("🤖 Analyzing CV and job description with Gemini AI..."):
+        llm_proveedor = obtener_proveedor(
+            nombre_proveedor=nombre_proveedor,
+            modelo=model_choice,
+            api_key=clave_activa,
+        )
+
+        with st.spinner(f"🤖 Analizando CV y oferta ({modo_etiqueta}) con {provider_choice} AI ({model_choice})..."):
             tex_final, analisis_estrategico = generar_cv_adaptado(
                 ruta_cv_base=str(path_cv_base),
                 ruta_oferta=str(path_oferta),
                 ruta_salida_tex=str(path_salida_tex),
-                modelo_por_defecto=model_choice,
-                retornar_analisis=True
+                retornar_analisis=True,
+                proveedor=llm_proveedor,
+                modo=modo_clave,
             )
 
         pdf_path = None

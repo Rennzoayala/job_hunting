@@ -2,3 +2,4 @@
 *.pyc
 tectonic.exe
 output/.last_run.hash
+input/base_cv.tex
